@@ -113,7 +113,6 @@ class Agent(ABC):
     def start_episode(self):
         """Prepara al agente para un nuevo episodio"""
         self.episode_count += 1
-        self.policy.update_parameters(self.episode_count)
     
     def end_episode(self, episode_reward: float):
         """
@@ -137,21 +136,3 @@ class Agent(ABC):
             "total_steps": self.total_steps,
             "episodes": self.episode_count
         }
-    
-    def get_optimal_policy(self):
-        """
-        Calcula la política óptima basada en los valores actuales
-        
-        Returns:
-            Matriz de política óptima: pi[estado] = acción
-        """
-        if isinstance(self.observation_space, gym.spaces.Discrete):
-            n_states = self.observation_space.n
-            optimal_policy = np.zeros(n_states, dtype=int)
-            
-            for s in range(n_states):
-                optimal_policy[s] = self.policy.select_action(s, self.get_action_values())
-                
-            return optimal_policy
-        else:
-            raise NotImplementedError("get_optimal_policy solo implementado para espacios discretos")

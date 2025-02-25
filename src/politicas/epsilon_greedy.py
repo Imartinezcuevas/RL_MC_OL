@@ -14,7 +14,7 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 
 from politicas.policy import Policy
 from typing import Any
-import gym
+import gymnasium as gym
 import numpy as np
 
 class EpsilonGreedyPolicy(Policy):
@@ -24,7 +24,7 @@ class EpsilonGreedyPolicy(Policy):
     y con probabilidad epsilon selecciona una acción aleatoria.
     """
     
-    def __init__(self, action_space: gym.spaces.Discrete, epsilon: float = 0.1):
+    def __init__(self, action_space: gym.spaces, epsilon: float = 0.1):
         """
         Inicializa la política epsilon-greedy
         
@@ -35,7 +35,7 @@ class EpsilonGreedyPolicy(Policy):
         super().__init__(action_space)
         self.epsilon = epsilon
     
-    def get_action_probabilities(self, state: Any, action_values: np.ndarray) -> np.ndarray:
+    def get_action_probabilities(self, state: Any, action_values: np.ndarray):
         """
         Calcula las probabilidades de seleccionar cada acción según la política epsilon-greedy
         

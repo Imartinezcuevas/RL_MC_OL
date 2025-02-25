@@ -21,7 +21,7 @@ class Policy(ABC):
     Clase base abstracta para todas las políticas de selección de acciones.
     """
 
-    def __init__(self, action_space: gym.spaces.Discrete):
+    def __init__(self, action_space: gym.spaces):
         """
         Inicializa la política
         

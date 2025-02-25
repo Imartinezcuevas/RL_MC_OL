@@ -1,5 +1,5 @@
 """
-Module: algorithms/__init__.py
+Module: politicas/__init__.py
 Description: Contiene las importaciones y modulos/clases públicas del paquete politicas.
 
 Author: Iván Martínez Cuevas

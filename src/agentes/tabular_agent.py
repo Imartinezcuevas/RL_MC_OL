@@ -14,7 +14,7 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 
 from agentes.agent import Agent
 import numpy as np
-import gym
+import gymnasium as gym
 
 class TabularAgent(Agent):
     """Clase base para agentes con representación tabular de la función Q"""
@@ -25,11 +25,7 @@ class TabularAgent(Agent):
         
         Args:
             **kwargs: Parámetros específicos
-        """
-        # Verifica que el espacio de estados sea discreto
-        if not isinstance(self.observation_space, gym.spaces.Discrete):
-            raise ValueError("TabularAgent requiere un espacio de estados discreto")
-        
+        """  
         self.n_states = self.observation_space.n
         self.n_actions = self.action_space.n
         

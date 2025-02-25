@@ -12,10 +12,11 @@ with the additional restriction that it may not be used for commercial purposes.
 For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
-from agentes.agent import BaseAgent
+from agentes.agent import Agent
 import numpy as np
+import gym
 
-class TabularAgent(BaseAgent):
+class TabularAgent(Agent):
     """Clase base para agentes con representación tabular de la función Q"""
     
     def _init_algorithm_params(self, **kwargs):

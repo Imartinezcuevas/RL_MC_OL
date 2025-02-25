@@ -13,7 +13,7 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
 from agentes.monte_carlo_agent import MonteCarloAgent
-from politicas import GreedyPolicy
+from politicas import Policy
 import numpy as np
 from typing import Any
 
@@ -32,7 +32,7 @@ class MonteCarloOffPolicyAgent(MonteCarloAgent):
         super()._init_algorithm_params(**kwargs)
         
         # Política objetivo (generalmente greedy)
-        self.target_policy = kwargs.get('target_policy', GreedyPolicy(self.action_space))
+        self.target_policy = kwargs.get('target_policy', Policy(self.action_space))
         
         # Política de comportamiento (para explorar)
         self.behavior_policy = self.policy

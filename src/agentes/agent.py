@@ -141,7 +141,6 @@ class Agent(ABC):
         return {
             "episode_rewards": self.episode_rewards,
             "mean_reward": np.mean(self.episode_rewards) if self.episode_rewards else 0,
-            "total_steps": self.total_steps,
             "episodes": self.episode_count,
             "reward_ratio": reward_ratio
         }

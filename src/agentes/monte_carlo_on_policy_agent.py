@@ -40,6 +40,8 @@ class MonteCarloOnPolicyAgent(MonteCarloAgent):
         if self.first_visit:
             visited = set()
         
+        print(returns)
+
         # Actualiza los valores Q basados en los retornos
         for t, ((state, action, _), G) in enumerate(zip(self.episode_buffer, returns)):
             # Para first-visit Monte Carlo, solo actualiza si es la primera visita al par estado-acción

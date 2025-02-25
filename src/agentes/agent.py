@@ -46,7 +46,7 @@ class Agent(ABC):
         
         # Estadísticas de aprendizaje
         self.episode_rewards = []
-        self.total_steps = 0
+        self.steps = []
         self.episode_count = 0
         
         # Inicialización específica según el tipo de algoritmo
@@ -114,7 +114,7 @@ class Agent(ABC):
         """Prepara al agente para un nuevo episodio"""
         self.episode_count += 1
     
-    def end_episode(self, episode_reward: float):
+    def end_episode(self, episode_reward: float, steps: float):
         """
         Finaliza el episodio actual y registra estadísticas
         
@@ -122,6 +122,7 @@ class Agent(ABC):
             episode_reward: Recompensa total del episodio
         """
         self.episode_rewards.append(episode_reward)
+        self.steps.append(steps)
     
     def stats(self):
         """
@@ -130,9 +131,17 @@ class Agent(ABC):
         Returns:
             Diccionario con estadísticas
         """
+        stats = 0
+        reward_ratio = []
+        for episode, reward in enumerate(self.episode_rewards):
+            stats += reward
+            reward_ratio.append(stats / (episode + 1))
+
+
         return {
             "episode_rewards": self.episode_rewards,
             "mean_reward": np.mean(self.episode_rewards) if self.episode_rewards else 0,
             "total_steps": self.total_steps,
-            "episodes": self.episode_count
+            "episodes": self.episode_count,
+            "reward_ratio": reward_ratio
         }

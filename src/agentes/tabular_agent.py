@@ -32,13 +32,8 @@ class TabularAgent(Agent):
         # Inicializa la tabla Q
         self.Q = np.zeros((self.n_states, self.n_actions))
         
-        # Inicialización optimista opcional
-        optimistic_init = kwargs.get('optimistic_init', False)
-        if optimistic_init:
-            init_value = kwargs.get('init_value', 1.0)
-            self.Q.fill(init_value)
     
-    def get_action_values(self) -> np.ndarray:
+    def get_action_values(self):
         """
         Devuelve la tabla Q
         

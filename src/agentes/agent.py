@@ -142,5 +142,6 @@ class Agent(ABC):
             "episode_rewards": self.episode_rewards,
             "mean_reward": np.mean(self.episode_rewards) if self.episode_rewards else 0,
             "episodes": self.episode_count,
-            "reward_ratio": reward_ratio
+            "reward_ratio": reward_ratio,
+            "episode_lengths": self.steps
         }

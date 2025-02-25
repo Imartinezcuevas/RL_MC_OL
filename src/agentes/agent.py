@@ -15,7 +15,8 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 from abc import ABC, abstractmethod
 import gymnasium as gym
 from politicas import Policy
-from typing import Any
+from typing import Any, Dict
+import numpy as np
 
 
 class Agent(ABC):
@@ -92,3 +93,65 @@ class Agent(ABC):
             Valores Q o estructura equivalente
         """
         pass
+
+    @abstractmethod
+    def update(self, state: Any, action: int, next_state: Any, reward: float, 
+               done: bool, info: Dict = None):
+        """
+        Actualiza el conocimiento del agente basado en la experiencia
+        
+        Args:
+            state: Estado actual
+            action: Acción tomada
+            next_state: Estado resultante
+            reward: Recompensa obtenida
+            done: Indicador de fin de episodio
+            info: Información adicional del entorno
+        """
+        pass
+    
+    def start_episode(self):
+        """Prepara al agente para un nuevo episodio"""
+        self.episode_count += 1
+        self.policy.update_parameters(self.episode_count)
+    
+    def end_episode(self, episode_reward: float):
+        """
+        Finaliza el episodio actual y registra estadísticas
+        
+        Args:
+            episode_reward: Recompensa total del episodio
+        """
+        self.episode_rewards.append(episode_reward)
+    
+    def stats(self):
+        """
+        Devuelve estadísticas sobre el proceso de aprendizaje
+        
+        Returns:
+            Diccionario con estadísticas
+        """
+        return {
+            "episode_rewards": self.episode_rewards,
+            "mean_reward": np.mean(self.episode_rewards) if self.episode_rewards else 0,
+            "total_steps": self.total_steps,
+            "episodes": self.episode_count
+        }
+    
+    def get_optimal_policy(self):
+        """
+        Calcula la política óptima basada en los valores actuales
+        
+        Returns:
+            Matriz de política óptima: pi[estado] = acción
+        """
+        if isinstance(self.observation_space, gym.spaces.Discrete):
+            n_states = self.observation_space.n
+            optimal_policy = np.zeros(n_states, dtype=int)
+            
+            for s in range(n_states):
+                optimal_policy[s] = self.policy.select_action(s, self.get_action_values())
+                
+            return optimal_policy
+        else:
+            raise NotImplementedError("get_optimal_policy solo implementado para espacios discretos")

@@ -32,6 +32,8 @@ class SARSAAgent(TabularAgent):
         
         # Tasa de aprendizaje
         self.alpha = kwargs.get('alpha', 0.1)
+        # Alpha original para cálculos
+        self.initial_alpha = self.alpha
         
         # Para exploración decreciente
         self.min_alpha = kwargs.get('min_alpha', 0.01)
@@ -39,6 +41,11 @@ class SARSAAgent(TabularAgent):
         # Para almacenar el estado y acción actual entre pasos
         self.current_state = None
         self.current_action = None
+
+        # Factor de decaimiento para la tasa de aprendizaje
+        self.decay_factor = kwargs.get('decay_factor', 0.99995)
+        # Parámetro para decaimiento exponencial
+        self.decay_exponent = kwargs.get('decay_exponent', 0.5)
     
     def update(self, state: Any, action: int, next_state: Any, reward: float, 
                done: bool, info: Dict = None) -> None:

@@ -18,7 +18,8 @@ from .tabular_agent import TabularAgent
 from .monte_carlo_agent import MonteCarloAgent
 from .monte_carlo_off_policy_agent import MonteCarloOffPolicyAgent
 from .monte_carlo_on_policy_agent import MonteCarloOnPolicyAgent
+from .sarsa_agent import SARSAAgent
 # Lista de módulos o clases públicas
 
-__all__ = ['Agent', 'TabularAgent', 'MonteCarloAgent', 'MonteCarloOffPolicyAgent', 'MonteCarloOnPolicyAgent']
+__all__ = ['Agent', 'TabularAgent', 'MonteCarloAgent', 'MonteCarloOffPolicyAgent', 'MonteCarloOnPolicyAgent', 'SARSAAgent']
 

@@ -34,9 +34,16 @@ class QLearningAgent(TabularAgent):
         
         # Tasa de aprendizaje
         self.alpha = kwargs.get('alpha', 0.1)
+        # Alpha original para cálculos
+        self.initial_alpha = self.alpha
         
         # Para exploración decreciente
         self.min_alpha = kwargs.get('min_alpha', 0.01)
+
+        # Factor de decaimiento para la tasa de aprendizaje
+        self.decay_factor = kwargs.get('decay_factor', 0.995)
+        # Parámetro para decaimiento exponencial
+        self.decay_exponent = kwargs.get('decay_exponent', 0.5)
     
     def update(self, state: Any, action: int, next_state: Any, reward: float, 
                done: bool, info: Dict = None) -> None:
@@ -75,5 +82,19 @@ class QLearningAgent(TabularAgent):
             episode: Episodio actual
             total_episodes: Número total de episodios
         """
-        decay_factor = 1 - (episode / total_episodes)
-        self.alpha = max(self.min_alpha, self.alpha * decay_factor)
+         # Calculamos la proporción del entrenamiento completado
+        progress = episode / total_episodes
+        
+        # Aplicamos un decaimiento exponencial con más control
+        # Esta fórmula mantiene alpha más alta durante más tiempo
+        # y luego la reduce más lentamente hacia el final
+        decay = self.decay_factor ** (progress ** self.decay_exponent * total_episodes)
+        
+        # Otra opción: decaimiento logarítmico para una reducción más gradual
+        # decay = 1.0 / (1.0 + self.decay_factor * math.log(1 + episode))
+        
+        # Calculamos el nuevo alpha aplicando el factor de decaimiento
+        new_alpha = self.initial_alpha * decay
+        
+        # Aseguramos que no baje del mínimo establecido
+        self.alpha = max(self.min_alpha, new_alpha)

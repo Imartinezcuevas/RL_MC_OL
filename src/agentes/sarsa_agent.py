@@ -13,7 +13,6 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
 from agentes.tabular_agent import TabularAgent
-import numpy as np
 from typing import Any, Dict
 
 class SARSAAgent(TabularAgent):

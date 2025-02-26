@@ -17,45 +17,52 @@ from typing import Any
 import gymnasium as gym
 import numpy as np
 
-class Policy(ABC):
+class EpsilonGreedyPolicy(Policy):
     """
-    Clase base abstracta para todas las políticas de selección de acciones.
+    Implementación de la política epsilon-greedy para selección de acciones.
+    Esta política selecciona la acción con mayor valor Q con probabilidad 1-epsilon,
+    y con probabilidad epsilon selecciona una acción aleatoria.
     """
-
-    def __init__(self, action_space: gym.spaces):
+    
+    def __init__(self, action_space: gym.spaces, epsilon: float = 0.1):
         """
-        Inicializa la política
+        Inicializa la política epsilon-greedy
         
         Args:
             action_space: Espacio de acciones del entorno
+            epsilon: Probabilidad de seleccionar una acción aleatoria
         """
-        self.action_space = action_space
-        self.n_actions = action_space.n
-
-    @abstractmethod
-    def select_action(self, state: gym.spaces.Box):
+        super().__init__(action_space)
+        self.epsilon = epsilon
+    
+    def get_action_probabilities(self, state: Any, action_values: np.ndarray):
         """
-        Selecciona una acción basada en el estado actual y los valores de acción
+        Calcula las probabilidades de seleccionar cada acción según la política epsilon-greedy
         
         Args:
             state: Estado actual
-            action_values: Valores de acción (Q) o cualquier estructura que use el agente
-            
-        Returns:
-            La acción seleccionada
-        """
-        pass
-
-    @abstractmethod
-    def get_action_probabilities(self, state: Any, action_values: Any):
-        """
-        Obtiene las probabilidades de seleccionar cada acción
-        
-        Args:
-            state: Estado actual
-            action_values: Valores de acción (Q) o cualquier estructura que use el agente
+            action_values: Matriz Q de valores de acción
             
         Returns:
             Array con probabilidades para cada acción
         """
-        pass
+        # Implementación de la política epsilon-soft
+        pi_A = np.ones(self.n_actions, dtype=float) * self.epsilon / self.n_actions
+        best_action = np.argmax(action_values[state])
+        pi_A[best_action] += (1.0 - self.epsilon)
+        return pi_A
+    
+    def select_action(self, state: Any, action_values: np.ndarray) -> int:
+        """
+        Selecciona una acción basada en el estado actual y los valores Q
+        siguiendo la política epsilon-greedy
+        
+        Args:
+            state: Estado actual
+            action_values: Matriz Q de valores de acción
+            
+        Returns:
+            La acción seleccionada
+        """
+        pi_A = self.get_action_probabilities(state, action_values)
+        return np.random.choice(np.arange(self.n_actions), p=pi_A)

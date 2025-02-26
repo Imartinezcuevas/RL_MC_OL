@@ -90,7 +90,7 @@ class SARSAAgent(TabularAgent):
         self.current_state = None
         self.current_action = None
 
-    def decay_learning_rate(self):
+    def decay_learning_rate(self, decay_factor):
         """
         Reduce la tasa de aprendizaque a medida que avanza el entrenamiento
 
@@ -98,6 +98,4 @@ class SARSAAgent(TabularAgent):
             episode: Episodio actual
             total_episodes: Número total de episodios
         """
-
-        decay_factor = 0.8  # Ajusta este factor según sea necesario
         self.alpha = max(self.min_alpha, self.alpha * decay_factor)

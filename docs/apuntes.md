@@ -34,3 +34,16 @@ Pasos
 4. Elegir la proxima acción $a'$ en $s'$ según la política.
 5. Actualizar el valor $Q(s,a)$ con la ecuacion de actualización de SARSA.
 6. Repetir hasta alcanzar una condición de parada.
+
+## Q-Learning
+Q-Learning es un algoritmo de aprendizaje por refuerzo off-policy basado en valores. A diferencia de SARSA, Q-Learning aprende a partir de la mejor acción posible, sin importar cúal haya sido realmente seleccionada.
+
+$$Q(s,a) <- Q(s,a) + \alpha [r + \gamma max_{a'} Q(s', a') - Q(s,a)] $$
+Donde:
+* $s$ y $a$ son el estado y la acción actuales.
+* $r$ es la recompensa obtenida tras tomar la acción $a$.
+* $s'$ es el nuevo estado tras la acción.
+* $a'$ es la  nueva acción elegida en $s'$ siguiendo la política.
+* $\alpha$ es la tasa de aprendizaje.
+* $\gamma$ es el factor de descuento.
+* $ max_{a'} Q(s', a')$ representa la mejor acción posible en el proximo estado s', lo que hace que Q-Learning sea off-policy (ya que no sigue necesariamente la política usada para actuar).

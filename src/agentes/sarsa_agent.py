@@ -76,7 +76,7 @@ class SARSAAgent(TabularAgent):
             target = reward + self.gamma * self.Q[next_state, next_action]
 
         # Actualizamos Q
-        self.Q[state, action] += self.alpha * (target - current_q)
+        self.Q[self.current_action, self.current_action] += self.alpha * (target - current_q)
 
         # Actualizamos el estado y accion actual para el siguiente paso
         self.current_action = next_action

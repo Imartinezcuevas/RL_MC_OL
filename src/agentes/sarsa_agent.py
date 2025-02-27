@@ -83,7 +83,7 @@ class SARSAAgent(TabularAgent):
             target = reward + self.gamma * self.Q[next_state, next_action]
 
         # Actualizamos Q
-        self.Q[self.current_state, self.current_action] += self.alpha * (target - current_q)
+        self.Q[state, action] += self.alpha * (target - current_q)
 
         # Actualizamos el estado y accion actual para el siguiente paso
         self.current_action = next_action
@@ -97,7 +97,7 @@ class SARSAAgent(TabularAgent):
         self.current_state = None
         self.current_action = None
 
-    def decay_learning_rate(self, episode, total_episodes):
+    def decay_learning_rate(self):
         """
         Reduce la tasa de aprendizaque a medida que avanza el entrenamiento
 
@@ -105,19 +105,4 @@ class SARSAAgent(TabularAgent):
             episode: Episodio actual
             total_episodes: Número total de episodios
         """
-         # Calculamos la proporción del entrenamiento completado
-        progress = episode / total_episodes
-        
-        # Aplicamos un decaimiento exponencial con más control
-        # Esta fórmula mantiene alpha más alta durante más tiempo
-        # y luego la reduce más lentamente hacia el final
-        decay = self.decay_factor ** (progress ** self.decay_exponent * total_episodes)
-        
-        # Otra opción: decaimiento logarítmico para una reducción más gradual
-        # decay = 1.0 / (1.0 + self.decay_factor * math.log(1 + episode))
-        
-        # Calculamos el nuevo alpha aplicando el factor de decaimiento
-        new_alpha = self.initial_alpha * decay
-        
-        # Aseguramos que no baje del mínimo establecido
-        self.alpha = max(self.min_alpha, new_alpha)
+        self.alpha = max(self.alpha * self.alpha_decay, self.alpha_min)

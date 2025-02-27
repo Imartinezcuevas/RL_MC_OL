@@ -30,7 +30,16 @@ class TabularAgent(Agent):
         self.n_actions = self.action_space.n
         
         # Inicializa la tabla Q
-        self.Q = np.zeros((self.n_states, self.n_actions))
+        # Inicializa la tabla Q
+        init_value = kwargs.get('init_value', 0.0)
+        optimistic_init = kwargs.get('optimistic_init', False)
+
+        if optimistic_init:
+            # Inicialización optimista para fomentar la exploración
+            self.Q = np.ones((self.n_states, self.n_actions)) * init_value
+        else:
+            # Inicialización a cero o valor específico
+            self.Q = np.zeros((self.n_states, self.n_actions))
         
     
     def get_action_values(self):

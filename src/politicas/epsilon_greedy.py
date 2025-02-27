@@ -66,3 +66,7 @@ class EpsilonGreedyPolicy(Policy):
         """
         pi_A = self.get_action_probabilities(state, action_values)
         return np.random.choice(np.arange(self.n_actions), p=pi_A)
+    
+    def decay_epsilon(self):
+        """Aplica el decaimiento a epsilon"""
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)

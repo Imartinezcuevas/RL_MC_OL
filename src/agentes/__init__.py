@@ -22,7 +22,7 @@ from .sarsa_agent import SARSAAgent
 from .qlearning_agent import QLearningAgent
 from .approximate_agent import ApproximateAgent
 from .linear_approximate_agent import LinearApproximateAgent
-from sarsa_semigradient_agent import SARSASemiGradientAgent
+from .sarsa_semigradient_agent import SARSASemiGradientAgent
 # Lista de módulos o clases públicas
 
 __all__ = ['Agent', 'TabularAgent', 'MonteCarloAgent', 'MonteCarloOffPolicyAgent', 'MonteCarloOnPolicyAgent', 'SARSAAgent', 'QLearningAgent', 'ApproximateAgent',

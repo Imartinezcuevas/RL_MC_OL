@@ -47,3 +47,75 @@ Donde:
 * $\alpha$ es la tasa de aprendizaje.
 * $\gamma$ es el factor de descuento.
 * $ max_{a'} Q(s', a')$ representa la mejor acción posible en el proximo estado s', lo que hace que Q-Learning sea off-policy (ya que no sigue necesariamente la política usada para actuar).
+
+# Técnicas de control de aproximaciones
+Las técnicas de control con aproximaciones en aprendizaje por refuerzo se utilizan cuando los métodos tabulares se vuelven inviables debido a un espacio de estados grande o continuo. En estos casos, en lugar de almacenar valores en una tabla, se utilizan funcones de aproximacion para estimar valores de acción o políticas.
+
+En el contexto de aprendizaje por refuerzo, las funciones de aproximación permiten representar la funcon de valor $Q(s,a)$ sin necesidad de almacenar una tabla. Para esto, se usan métodos basados en funciones lineales o redes neuronales.
+
+Las dos técnicas que nos interesan son:
+* SARSA Semi-Gradiente
+* Deep Q-Learning
+
+## Temporal difference
+TD(Temporal difference, o Diferenciasa temporales) es un método de aprendizaje en el que las estimaciones de los valroes de estado o acción se actualizan basandose en otras estimaciones en lugar de esperar una recompensa final.
+
+"Es una combinación de Monte Carlo (usa recompensas reales a futuro) y Programación dinámica (usa estimaciones previas)."
+
+**Fórmula de TD**
+El error de TD($\delta$) mide la diferencia entre la predicción actual y una estimación mejorada basada en el siguiente estado:
+$$\delta = r + \gamma V(s') - V(s)$$
+* $r$: recompensa inmediata obtenida.
+* $\gamma$: factor de descuento.
+* $V(s')$: estimación del valor del próximo estado.
+* $V(s)$: estimación del valor del estado actual.
+
+
+## SARSA Semi-Gradiente
+SARSA Semi-Gradiente es una versión de SARSA donde en lugar de almacenar valores en una tabla, se usa una funcion de aproximación lineal:
+$$Q(s,a; w) \approx \sum_{i} w_i \cdot \phi_i (s,a)$$
+donde:
+* $w_i$ son los pesos aprendidos del modelo.
+* $\phi_i (s,a)$ son características extraidas del estado y la acción (pueden ser funciones manuales o basadas en técnicas como Tile Coding).$
+
+El algoritmo sigue la misma estructura de SARSA pero actualiza los pesos usando descenso de gradiente en lugar de tablas:
+$$w \leftarrow w + \alpha \delta ∇_w Q(s,a;w)$$
+donde el error $TD(\delta)$ se calcula como:
+$$\delta = r + \gamma Q(s',a';w) - Q(s,a;w)$$
+
+Esto tiene unas ventajas:
+* Permite manejar espacios continuos.
+* Más eficiente en problemas de alta dimensión que los métodos tabulares.
+
+## Deep Q-Learning
+DQN es una extensión de Q-Learning donde se usa una red neuronal para aproximar $Q(s,a)$:
+$$Q(s,a;\theta) \approx Red$$
+Los pesos $\theta$ de la red se actualizan minimizando el error de TD:
+$$L(\theta) = E[(r+\gamma max_a Q(s',a';\theta^-)-Q(s,a;\theta)^2)]$$
+
+donde:
+* $\theta_-$ son los parámetros de una red objetivo.
+* Se usa replay bujjer para almacenar experiencias y reducir correlación entre muestras.
+* Se actualiza con descenso de gradiente.
+
+## Tile Coding
+El Tile Coding es una técnica de representación de estados usada en aprendizaje por refuerzo con funciones lineales. Permite transformar un espacio de estados continuo en una representación discreta que facilita el aprendizaje.
+
+**¿Cómo funciona?**
+* Se divide el espacio de estados en múltiples rejillas superuestas(tiles):
+    * Se  crean varias rejillas desplazadas entre sí.
+    * Cada rejilla cubre todo el espacio de estados, pero con un pequeño desplazamiento respecto a las otras.
+* Activar tiles según el estado:
+    * Cada estado cae en un tile dentro de cada rejilla.
+    * Las representación de un estado será un vector binario donde las posiciones activadas son 1, y las demás son 0.
+* Aproximación lineal con Tile Coding:
+    * En lugar de tener una gran tabla Q(s,a) tenemos un vector de pesos w.
+    * Para estimar Q(s,a), simplemente sumamos los pesos de lso tiles activados.
+    * Durante el aprendizaje, los pesos se ajustan con descenso de gradiente.
+
+Esto permite aproximar funciones de valores en espacios continuos sin usar redes neuronales.
+
+**Ejemplo MountainCar**
+El entorno MountainCar de Gymnasium tiene un espacio de estados continuo:
+* s = (posición, velocidad)
+* Acciones: $a \in$ {empujar izquierda, no empujar, empujar derecha}

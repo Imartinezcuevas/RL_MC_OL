@@ -42,7 +42,7 @@ class TabularAgent(Agent):
             self.Q = np.zeros((self.n_states, self.n_actions))
         
     
-    def get_action_values(self, state: None):
+    def get_action_values(self, state = None):
         """
         Devuelve la tabla Q
         

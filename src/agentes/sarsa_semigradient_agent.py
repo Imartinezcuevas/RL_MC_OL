@@ -44,16 +44,16 @@ class SARSASemiGradientAgent(Agent):
         )
         
         # Tasa de aprendizaje
-        self.alpha = kwargs.get('alpha', 0.1 / num_tilings)  # Normalizado por num_tilings
-        self.alpha_decay = kwargs.get('alpha_decay', 0.999)
-        self.alpha_min = kwargs.get('alpha_min', 0.001)
+        self.alpha = kwargs.get('alpha', 0.2 / num_tilings)  # Normalizado por num_tilings
+        self.alpha_decay = kwargs.get('alpha_decay', 0.9995)
+        self.alpha_min = kwargs.get('alpha_min', 0.01)
         
         # Inicializar pesos para la aproximación lineal
         # w tendrá dimensiones [n_features, n_actions]
         self.n_actions = self.action_space.n
         self.n_features = self.tile_coder.n_features
         
-        init_value = kwargs.get('init_value', 0.0)
+        init_value = kwargs.get('init_value', 1.0)
         optimistic_init = kwargs.get('optimistic_init', False)
         
         if optimistic_init:
@@ -151,13 +151,28 @@ class SARSASemiGradientAgent(Agent):
         
         # Calcular el error TD
         td_error = target - current_q
+
+        # Verificar que td_error no sea NaN ni infinito
+        if not np.isfinite(td_error):
+            print(f"Warning: TD error no válido: {td_error}. Target: {target}, Current Q: {current_q}")
+            # Prevenir la actualización con valores no válidos
+            return
         
         # Actualizar los pesos: w += α * δ * ∇Q(s,a)
         # En aproximación lineal, ∇Q(s,a) = x (el vector de features)
         for f in self.current_features:
-            self.w[f, self.current_action] += self.alpha * td_error
+            # Verificar índices válido
+            if f < 0 or f >= self.w.shape[0] or self.current_action < 0 or self.current_action >= self.w.shape[1]:
+                print(f"Índice inválido: f={f}, action={self.current_action}, shape={self.w.shape}")
+                continue
+
+            # Aplicar actualización con clip para evitar valores extremos
+            update_value = self.alpha * td_error
+            if np.isfinite(update_value):
+                self.w[f, self.current_action] += update_value
         
         # Actualizar estado y acción actual
+        self.current_state = state
         self.current_features = features
         self.current_action = action
     
@@ -166,6 +181,7 @@ class SARSASemiGradientAgent(Agent):
         Prepara el agente para un nuevo episodio
         """
         super().start_episode()
+        self.current_state = None
         self.current_features = None
         self.current_action = None
     

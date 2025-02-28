@@ -78,7 +78,7 @@ class SARSASemiGradientAgent(Agent):
             Array con valores Q para cada acción
         """
         if state is None:
-            return self.w
+            raise ValueError("Se requiere un estado para calcular los valores Q en SARSA Semi-Gradiente")
         
         # Codificar el estado en features
         features = self.tile_coder.encode(state)

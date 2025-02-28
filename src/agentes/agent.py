@@ -72,18 +72,8 @@ class Agent(ABC):
         Returns:
             Acción seleccionada
         """
-        return self.policy.select_action(state, self.get_action_values())
+        return self.policy.select_action(state, self.get_action_values(state))
     
-    @abstractmethod
-    def get_action_values(self) -> Any:
-        """
-        Devuelve la estructura de valores de acción (Q) que usa el agente
-        
-        Returns:
-            Valores Q o estructura equivalente
-        """
-        pass
-
     @abstractmethod
     def get_action_values(self) -> Any:
         """

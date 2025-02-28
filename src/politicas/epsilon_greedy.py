@@ -50,7 +50,24 @@ class EpsilonGreedyPolicy(Policy):
         """
         # Implementación de la política epsilon-soft
         pi_A = np.ones(self.n_actions, dtype=float) * self.epsilon / self.n_actions
-        best_action = np.argmax(action_values[state])
+
+        # Verificamos el tipo de action_values para menejar estados discretos y continuos
+        if isinstance(action_values, np.ndarray) and action_values.ndim > 1:
+            # Para tabular
+            if isinstance(state, (int, np.integer)):
+                # El estado es un indice entero, podemos acceder  directamente
+                q_values = action_values[state]
+            else:
+                raise ValueError("State debe ser un entero para espacios de estados discretos")
+        else:
+            # Para continuos. En este caso action_values ya contiene los valores Q o es una funcion
+            if callable(action_values):
+                q_values = action_values(state)
+            else:
+                q_values = action_values
+
+        #Selecciona la mejor acción
+        best_action = np.argmax(q_values)
         pi_A[best_action] += (1.0 - self.epsilon)
         return pi_A
     

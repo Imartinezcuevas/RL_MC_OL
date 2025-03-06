@@ -14,101 +14,52 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 
 from agentes.monte_carlo_agent import MonteCarloAgent
 import numpy as np
-from typing import Any
-from politicas import EpsilonGreedyPolicy
 
 class MonteCarloOffPolicyAgent(MonteCarloAgent):
     """
-    Agente de Monte Carlo off-policy usando importance sampling
+    Agente de Monte Carlo Off-Policy usando Importance Sampling.
     """
-    
-    def _init_algorithm_params(self, **kwargs):
-        """
-        Inicializa parámetros específicos para Monte Carlo off-policy
-        
-        Args:
-            **kwargs: Parámetros adicionales
-        """
-        super()._init_algorithm_params(**kwargs)
-        
-        # Política objetivo (generalmente greedy)
-        self.target_policy = kwargs.get('target_policy', EpsilonGreedyPolicy(self.action_space, epsilon=0.1))
-        
-        # Política de comportamiento (para explorar)
-        self.behavior_policy = self.policy
-        
-        # Indica si se usa importance sampling ponderado
-        self.weighted_is = kwargs.get('weighted_is', True)
-        
-        # Para importance sampling ponderado
-        self.C = np.zeros((self.n_states, self.n_actions))
-    
-    def get_action(self, state: Any) -> int:
-        """
-        Obtiene una acción usando la política de comportamiento
-        
-        Args:
-            state: Estado actual
-            
-        Returns:
-            Acción seleccionada
-        """
-        return self.behavior_policy.select_action(state, self.Q)
     
     def _process_episode(self):
         """
-        Procesa el episodio completo según el algoritmo de Monte Carlo off-policy
+        Procesa el episodio completo según el algoritmo de Monte Carlo Off-Policy.
         """
         if not self.episode_buffer:
             return
-            
-        # Calcula retorno y peso de importance sampling
-        G = 0
-        W = 1.0  # Peso de importance sampling
         
-        # Para first-visit Monte Carlo
-        if self.first_visit:
-            visited = set()
+        G = 0  # Inicializamos el retorno
+        W = 1.0  # Peso de Importance Sampling
+        returns = []
         
-        # Recorre el episodio en orden inverso
+        # Para first-visit Monte Carlo, llevamos un registro de visitas
+        visited = set()  
+
         for t in range(len(self.episode_buffer) - 1, -1, -1):
             state, action, reward = self.episode_buffer[t]
-            
-            # Calcula el retorno
-            G = self.gamma * G + reward
-            
-            # Para first-visit Monte Carlo
+            G = reward + self.gamma * G
+            returns.insert(0, G)
+
             if self.first_visit:
                 if (state, action) in visited:
                     continue
                 visited.add((state, action))
             
-            # Actualiza C para importance sampling ponderado
-            if self.weighted_is:
-                self.C[state, action] += W
-            
-            # Actualiza Q con importance sampling
-            if self.weighted_is and self.C[state, action] > 0:
-                self.Q[state, action] += W / self.C[state, action] * (G - self.Q[state, action])
-            else:
-                # Importance sampling ordinario
-                alpha = 1.0 / self.visit_counts[state, action] if self.visit_counts[state, action] > 0 else 0.1
-                self.Q[state, action] += W * alpha * (G - self.Q[state, action])
-            
-            # Actualiza el peso del importance sampling
-            target_probs = self.target_policy.get_action_probabilities(state, self.Q)
-            behavior_probs = self.behavior_policy.get_action_probabilities(state, self.Q)
-            
-            # Si la acción tiene probabilidad cero en la política de comportamiento, termina
+            # Debug para revisar `G` y `W`
+            #print(f"\nEpisodio {t}: Estado={state}, Acción={action}, Recompensa={reward}, G={G:.4f}, W={W:.4f}")
+
+            # Verificar si la probabilidad de la acción es extremadamente pequeña
+            behavior_probs = self.policy.get_action_probabilities(state, self.Q)
             if behavior_probs[action] == 0:
                 break
-                
-            # Actualiza el peso usando el ratio de importance sampling
-            W *= target_probs[action] / behavior_probs[action]
-            
-            # Si el peso llega a cero, no afectará futuras actualizaciones
-            if W == 0:
+
+            # Evitar que W explote
+            W = min(W / behavior_probs[action], 10.0)
+
+            # Evitar valores NaN o Inf en `W`
+            if W == 0 or not np.isfinite(W):
                 break
-            
-            # Incrementa el contador de visitas
+
+            # Actualización con Importance Sampling
             self.visit_counts[state, action] += 1
+            alpha = 1.0 / self.visit_counts[state, action]
+            self.Q[state, action] += W * alpha * (G - self.Q[state, action])

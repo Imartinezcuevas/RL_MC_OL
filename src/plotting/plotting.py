@@ -56,39 +56,51 @@ def plot_reward_ratio(list_stats):
     plt.grid(True)
     plt.show()
 
-def plot_training_comparation(algorithms_data):
+def plot_training_comparation(algorithms_data, same=False):
     """
     Recibe un diccionario con la estructura:
         {
           "nombre_algoritmo": (lista_recompensas, lista_longitudes),
           "otro_algoritmo":   (lista_recompensas, lista_longitudes)
         }
-    y genera un único gráfico con dos subplots:
-    - Recompensa por episodio
-    - Longitud de episodio
+    y genera:
+      - Si same=False (por defecto), un gráfico con dos subplots:
+          * Recompensa por episodio
+          * Duración de los episodios
+      - Si same=True, solo se muestra la gráfica de la duración de los episodios.
     """
-    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
-    
-    for alg_name, (rewards, lengths) in algorithms_data.items():
-        episodes = np.arange(1, len(rewards) + 1)
-        # Gráfica de recompensas
-        axs[0].plot(episodes, rewards, label=alg_name)
-        # Gráfica de longitudes
-        axs[1].plot(episodes, lengths, label=alg_name)
-    
-    # Configuración de la subgráfica de recompensas
-    axs[0].set_title("Recompensa por Episodio")
-    axs[0].set_xlabel("Episodio")
-    axs[0].set_ylabel("Recompensa")
-    axs[0].legend()
-    axs[0].grid(True)
-    
-    # Configuración de la subgráfica de longitudes
-    axs[1].set_title("Duración de los Episodios")
-    axs[1].set_xlabel("Episodio")
-    axs[1].set_ylabel("Número de pasos")
-    axs[1].legend()
-    axs[1].grid(True)
+    if not same:
+        fig, (ax_reward, ax_length) = plt.subplots(2, 1, figsize=(10, 8))
+        for alg_name, (rewards, lengths) in algorithms_data.items():
+            episodes = np.arange(1, len(rewards) + 1)
+            # Gráfica de recompensas
+            ax_reward.plot(episodes, rewards, label=f"{alg_name}")
+            # Gráfica de duración de episodios
+            ax_length.plot(episodes, lengths, label=f"{alg_name}")
+        
+        ax_reward.set_title("Recompensa por Episodio")
+        ax_reward.set_xlabel("Episodio")
+        ax_reward.set_ylabel("Recompensa")
+        ax_reward.legend()
+        ax_reward.grid(True)
+        
+        ax_length.set_title("Duración de los Episodios")
+        ax_length.set_xlabel("Episodio")
+        ax_length.set_ylabel("Número de pasos")
+        ax_length.legend()
+        ax_length.grid(True)
+    else:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+        for alg_name, (rewards, lengths) in algorithms_data.items():
+            episodes = np.arange(1, len(lengths) + 1)
+            # Solo se grafica la duración
+            ax.plot(episodes, lengths, label=f"{alg_name}")
+        
+        ax.set_title("Duración de los Episodios")
+        ax.set_xlabel("Episodio")
+        ax.set_ylabel("Número de pasos")
+        ax.legend()
+        ax.grid(True)
     
     plt.tight_layout()
     plt.show()

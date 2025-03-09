@@ -13,8 +13,8 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
 # Importación de módulos o clases
-from .plotting import plot_episode_lengths, plot_reward_ratio
+from .plotting import plot_episode_lengths, plot_reward_ratio, plot_training_comparation
 
 # Lista de módulos o clases públicas
-__all__ = ['plot_episode_lengths', 'plot_reward_ratio']
+__all__ = ['plot_episode_lengths', 'plot_reward_ratio', 'plot_training_comparation']
 

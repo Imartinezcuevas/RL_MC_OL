@@ -13,85 +13,56 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
 from agentes.tabular_agent import TabularAgent
+import numpy as np
 from typing import Any, Dict
 
 class SARSAAgent(TabularAgent):
     """
-    Implementación del algoritmo SARSA (State-Action-Reward-State-Action)
-    on-policy.
+    Agente SARSA para aprendizaje por refuerzo.
+    
+    Actualiza la función Q con la fórmula:
+    
+        Q(s, a) ← Q(s, a) + α [r + γ * Q(s', a') - Q(s, a)]
+    
+    donde a' se selecciona siguiendo la política epsilon-greedy.
     """
     
     def _init_algorithm_params(self, **kwargs):
         """
-        Inicializa parámetros específicos para SARSA
+        Inicializa los parámetros específicos para el agente SARSA.
         
         Args:
-            **kwargs: Parámetros adicionales
+            **kwargs: Parámetros adicionales, entre ellos:
+                - alpha: tasa de aprendizaje (learning rate)
         """
+        # Inicializa los parámetros comunes para agentes tabulares
         super()._init_algorithm_params(**kwargs)
-        
         # Tasa de aprendizaje
         self.alpha = kwargs.get('alpha', 0.1)
-        self.alpha_decay = kwargs.get('alpha_decay', 0.999)
-        self.alpha_min = kwargs.get('alpha_min', 0.01)
-
-        # Para almacenar el estado y acción actual entre pasos
-        self.current_state = None
-        self.current_action = None
-
     
     def update(self, state: Any, action: int, next_state: Any, reward: float, 
                done: bool, info: Dict = None) -> None:
         """
-        Actualiza los valores Q usando la regla de actualización SARSA
+        Actualiza la función Q en base a la transición (s, a, r, s') utilizando la fórmula de SARSA.
         
         Args:
             state: Estado actual
-            action: Acción tomada
-            next_state: Estado siguiente
+            action: Acción tomada en el estado actual
+            next_state: Estado resultante tras la acción
             reward: Recompensa recibida
             done: Indicador de fin de episodio
-            info: Información adicional
+            info: Información adicional del entorno (opcional)
         """
-        # Si es el primer paso del episodio, solo almacena el estado y acción
-        if self.current_state is None:
-            self.current_state = state
-            self.current_action = action
-            return
-        
-        # En caso contrario, actuliza la funcion Q con la regla SARSA
-        next_action = self.get_action(next_state) if not done else 0
-
-        # Obtiene los valores actuales
-        current_q = self.Q[self.current_state, self.current_action]
-
-        # Calculamos la recompensa para la actualizacion
+        # Si el episodio ha terminado, consideramos Q(s', a') = 0
         if done:
-            # Si el episodio ha terminado, no hay estado siguiente
-            # Si el estado es terminal, Q(St+1,At+1) se define como cero
-            # La actualización se convierte en R + γ*0 = R
-            target = reward
+            td_target = reward
         else:
-            # Si no ha terminado, usamos el valor Q del siguiente par estado accion
-            target = reward + self.gamma * self.Q[next_state, next_action]
-
-        # Actualizamos Q
-        self.Q[self.current_state, self.current_action] += self.alpha * (target - current_q)
-
-        # Actualizamos el estado y accion actual para el siguiente paso
-        self.current_action = next_action
-        self.current_state = next_state
-    
-    def start_episode(self):
-        """
-        Prepara el agente para un nuevo episodio
-        """
-        super().start_episode()
-        self.current_state = None
-        self.current_action = None
-
-    def decay_learning_rate(self):
-        """
-        Reduce la tasa de aprendizaque a medida que avanza el entrenamiento
-        """
-        self.alpha = max(self.alpha * self.alpha_decay, self.alpha_min)
+            # Selecciona la siguiente acción a' utilizando la política actual
+            next_action = self.policy.select_action(next_state, self.Q)
+            td_target = reward + self.gamma * self.Q[next_state, next_action]
+        
+        # Calcula el error TD
+        td_error = td_target - self.Q[state, action]
+        
+        # Actualiza la función Q de manera incremental
+        self.Q[state, action] += self.alpha * td_error

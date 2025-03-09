@@ -13,180 +13,89 @@ For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
 
 from agentes.agent import Agent
-from agentes.tile_coder import TileCoder
-import numpy as np
-from typing import Dict
+import torch.nn as nn
+import torch.optim as optim
+import torch
+
+class DQNNetwork(nn.Module):
+    def __init__(self, input_dim, output_dim, hidden_dim=64):
+        super(DQNNetwork, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+    
+    def forward(self, x):
+        return self.net(x)
 
 class SARSASemiGradientAgent(Agent):
     """
-    Implementación del algoritmo SARSA con aproximación semi-gradiente.
-    Este es un método on-policy que aprende mientras sigue la política actual.
+    Agente basado en SARSA semi-gradiente para aproximar la función Q mediante una red neuronal.
+    Actualiza la red de forma on-policy utilizando la política epsilon-greedy.
     """
-    
     def _init_algorithm_params(self, **kwargs):
-        """
-        Inicializa parámetros específicos para SARSA semi-gradiente
-        
-        Args:
-            **kwargs: Parámetros adicionales
-        """
-        # Configuración del Tile Coding
-        num_tilings = kwargs.get('num_tilings', 8)
-        num_tiles = kwargs.get('num_tiles', 8)
-        scale_factor = kwargs.get('scale_factor', 1.0)
-        
-        # Inicializar el tile coder
-        self.tile_coder = TileCoder(
-            self.observation_space,
-            num_tilings=num_tilings,
-            num_tiles=num_tiles,
-            scale_factor=scale_factor
-        )
-        
-        # Tasa de aprendizaje
-        self.alpha = kwargs.get('alpha', 0.2 / num_tilings)  # Normalizado por num_tilings
-        self.alpha_decay = kwargs.get('alpha_decay', 0.9995)
-        self.alpha_min = kwargs.get('alpha_min', 0.01)
-        
-        # Inicializar pesos para la aproximación lineal
-        # w tendrá dimensiones [n_features, n_actions]
+        self.lr = kwargs.get('lr', 0.001)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.input_dim = self.observation_space.shape[0]
         self.n_actions = self.action_space.n
-        self.n_features = self.tile_coder.n_features
         
-        init_value = kwargs.get('init_value', 1.0)
-        optimistic_init = kwargs.get('optimistic_init', False)
+        # Red neuronal para aproximar Q(s,a)
+        self.q_network = DQNNetwork(self.input_dim, self.n_actions).to(self.device)
         
-        if optimistic_init:
-            self.w = np.ones((self.n_features, self.n_actions)) * init_value / num_tilings
-        else:
-            self.w = np.zeros((self.n_features, self.n_actions))
+        # Optimizador
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
         
-        # Para almacenar el estado y acción actual entre pasos
-        self.current_state = None
-        self.current_action = None
-        self.current_features = None
-
-    def get_action_values(self, state=None):
+    def get_action_values(self, state):
         """
-        Calcula los valores Q para todas las acciones en el estado dado
-        usando la aproximación lineal
-        
-        Args:
-            state: Estado para el que calcular los valores Q
-            
-        Returns:
-            Array con valores Q para cada acción
+        Devuelve los valores Q para todas las acciones dado un estado,
+        utilizando la red Q.
         """
-        if state is None:
-            raise ValueError("Se requiere un estado para calcular los valores Q en SARSA Semi-Gradiente")
-        
-        # Codificar el estado en features
-        features = self.tile_coder.encode(state)
-        
-        # Calcular valor Q para cada acción: Q(s,a) = sum(w_i * x_i)
-        q_values = np.zeros(self.n_actions)
-        for a in range(self.n_actions):
-            for f in features:
-                q_values[a] += self.w[f, a]
-        
-        return q_values
+        self.q_network.eval()
+        with torch.no_grad():
+            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+            q_values = self.q_network(state_tensor)
+        return q_values.cpu().numpy()[0]
     
-    def get_q_value(self, features, action):
+    def update(self, state, action, next_state, reward, done, info=None):
         """
-        Calcula el valor Q para un conjunto de features y una acción
+        Actualiza la red Q usando la regla de SARSA semi-gradiente:
         
-        Args:
-            features: Lista de índices de features activas
-            action: Acción para la que calcular el valor Q
+            Q(s,a) ← Q(s,a) + lr * [r + γ * Q(s',a';θ) - Q(s,a;θ)]
             
-        Returns:
-            Valor Q
+        donde a' se selecciona utilizando la política epsilon-greedy.
         """
-        q_value = 0.0
-        for f in features:
-            q_value += self.w[f, action]
-        return q_value
-    
-    def update(self, state: np.ndarray, action: int, next_state: np.ndarray, 
-               reward: float, done: bool, info: Dict = None) -> None:
-        """
-        Actualiza los pesos usando la regla de actualización SARSA semi-gradiente
+        self.q_network.train()
         
-        Args:
-            state: Estado actual
-            action: Acción tomada
-            next_state: Estado siguiente
-            reward: Recompensa recibida
-            done: Indicador de fin de episodio
-            info: Información adicional
-        """
-        # Codificar estado actual
-        features = self.tile_coder.encode(state)
+        # Convertir estados a tensores
+        state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+        next_state_tensor = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0).to(self.device)
         
-        # Si es el primer paso del episodio, solo almacena el estado y acción
-        if self.current_features is None:
-            self.current_features = features
-            self.current_action = action
-            return
+        # Valor Q para el estado actual
+        q_values = self.q_network(state_tensor)
+        current_q = q_values[0, action]
         
-        # En caso contrario, actualiza los pesos con la regla semi-gradiente SARSA
-        if not done:
-            # Obtener siguiente acción usando la política (on-policy)
-            next_action = self.get_action(next_state)
-            
-            # Obtener features del siguiente estado
-            next_features = self.tile_coder.encode(next_state)
-            
-            # Calcular el valor Q' del siguiente par estado-acción
-            next_q = self.get_q_value(next_features, next_action)
-            
-            # Calcular target: r + γQ(s',a')
-            target = reward + self.gamma * next_q
+        # Calcular el target
+        if done:
+            target = torch.tensor(reward, dtype=torch.float32).to(self.device)
         else:
-            # Si es un estado terminal, el target es solo la recompensa
-            target = reward
-        
-        # Obtener el valor Q actual
-        current_q = self.get_q_value(self.current_features, self.current_action)
+            # Seleccionar la siguiente acción con la política (epsilon-greedy)
+            next_q_values = self.get_action_values(next_state)
+            next_action = self.policy.select_action(next_state, next_q_values)
+            self.q_network.eval()
+            with torch.no_grad():
+                q_next = self.q_network(next_state_tensor)[0, next_action]
+            target = torch.tensor(reward, dtype=torch.float32).to(self.device) + self.gamma * q_next
         
         # Calcular el error TD
         td_error = target - current_q
-
-        # Verificar que td_error no sea NaN ni infinito
-        if not np.isfinite(td_error):
-            print(f"Warning: TD error no válido: {td_error}. Target: {target}, Current Q: {current_q}")
-            # Prevenir la actualización con valores no válidos
-            return
         
-        # Actualizar los pesos: w += α * δ * ∇Q(s,a)
-        # En aproximación lineal, ∇Q(s,a) = x (el vector de features)
-        for f in self.current_features:
-            # Verificar índices válido
-            if f < 0 or f >= self.w.shape[0] or self.current_action < 0 or self.current_action >= self.w.shape[1]:
-                print(f"Índice inválido: f={f}, action={self.current_action}, shape={self.w.shape}")
-                continue
-
-            # Aplicar actualización con clip para evitar valores extremos
-            update_value = self.alpha * td_error
-            if np.isfinite(update_value):
-                self.w[f, self.current_action] += update_value
+        # Pérdida: error cuadrático
+        loss = td_error.pow(2)
         
-        # Actualizar estado y acción actual
-        self.current_state = state
-        self.current_features = features
-        self.current_action = action
-    
-    def start_episode(self):
-        """
-        Prepara el agente para un nuevo episodio
-        """
-        super().start_episode()
-        self.current_state = None
-        self.current_features = None
-        self.current_action = None
-    
-    def decay_learning_rate(self):
-        """
-        Reduce la tasa de aprendizaje a medida que avanza el entrenamiento
-        """
-        self.alpha = max(self.alpha * self.alpha_decay, self.alpha_min)
+        # Actualizar la red mediante gradiente descendiente
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()

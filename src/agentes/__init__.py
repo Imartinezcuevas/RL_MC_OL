@@ -21,7 +21,8 @@ from .monte_carlo_on_policy_agent import MonteCarloOnPolicyAgent
 from .sarsa_agent import SARSAAgent
 from .qlearning_agent import QLearningAgent
 from .sarsa_semigradient_agent import SARSASemiGradientAgent
-# Lista de módulos o clases públicas
+from .dqlearning_agent import DeepQAgent
 
-__all__ = ['Agent', 'TabularAgent', 'MonteCarloAgent', 'MonteCarloOffPolicyAgent', 'MonteCarloOnPolicyAgent', 'SARSAAgent', 'QLearningAgent', "SARSASemiGradientAgent"]
+# Lista de módulos o clases públicas
+__all__ = ['Agent', 'TabularAgent', 'MonteCarloAgent', 'MonteCarloOffPolicyAgent', 'MonteCarloOnPolicyAgent', 'SARSAAgent', 'QLearningAgent', 'SARSASemiGradientAgent', 'DeepQAgent']
 

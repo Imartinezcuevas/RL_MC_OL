@@ -11,11 +11,7 @@ with the additional restriction that it may not be used for commercial purposes.
 
 For more details about GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
 """
-
-from typing import List
-
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 def plot_episode_lengths(episode_lengths):
@@ -58,4 +54,41 @@ def plot_reward_ratio(list_stats):
 
     # Mostramos el gráfico
     plt.grid(True)
+    plt.show()
+
+def plot_training_comparation(algorithms_data):
+    """
+    Recibe un diccionario con la estructura:
+        {
+          "nombre_algoritmo": (lista_recompensas, lista_longitudes),
+          "otro_algoritmo":   (lista_recompensas, lista_longitudes)
+        }
+    y genera un único gráfico con dos subplots:
+    - Recompensa por episodio
+    - Longitud de episodio
+    """
+    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
+    
+    for alg_name, (rewards, lengths) in algorithms_data.items():
+        episodes = np.arange(1, len(rewards) + 1)
+        # Gráfica de recompensas
+        axs[0].plot(episodes, rewards, label=alg_name)
+        # Gráfica de longitudes
+        axs[1].plot(episodes, lengths, label=alg_name)
+    
+    # Configuración de la subgráfica de recompensas
+    axs[0].set_title("Recompensa por Episodio")
+    axs[0].set_xlabel("Episodio")
+    axs[0].set_ylabel("Recompensa")
+    axs[0].legend()
+    axs[0].grid(True)
+    
+    # Configuración de la subgráfica de longitudes
+    axs[1].set_title("Duración de los Episodios")
+    axs[1].set_xlabel("Episodio")
+    axs[1].set_ylabel("Número de pasos")
+    axs[1].legend()
+    axs[1].grid(True)
+    
+    plt.tight_layout()
     plt.show()
